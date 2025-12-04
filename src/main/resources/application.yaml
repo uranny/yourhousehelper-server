@@ -1,25 +1,22 @@
 server:
-  port: 8080
+  port: ${SERVER_PORT:8080} # 기본값 8080
 
 spring:
-  sql:
-    init:
-      mode: never
+  datasource:
+    url: ${DB_URL}
+    username: ${DB_USERNAME}
+    password: ${DB_PASSWORD}
+    driver-class-name: ${DB_DRIVER}
   jpa:
-    show-sql: true
+    show-sql: ${SPRING_JPA_SHOW_SQL:true}
+    hibernate:
+      ddl-auto: ${SPRING_JPA_HIBERNATE_DDL_AUTO:update}
     properties:
       hibernate:
-        format_sql: true
-    hibernate:
-      ddl-auto: create-drop
-    defer-datasource-initialization: true
-  datasource:
-    url: jdbc:h2:mem:yourhousehelper
-    driver-class-name: org.h2.Driver
-    username: sa
-    password:
-  h2:
-    console:
-      enabled: true
-  application:
-    name: yourhousehelper
+        format_sql: ${SPRING_JPA_PROPERTIES_HIBERNATE_FORMAT_SQL:true}
+    defer-datasource-initialization: ${SPRING_JPA_DEFER_DATASOURCE_INITIALIZATION:true}
+
+jwt:
+  secret-key: ${JWT_SECRET_KEY}
+  access-token-expiration-time: ${JWT_ACCESS_TOKEN_EXPIRATION_TIME}
+  refresh-token-expiration-time: ${JWT_REFRESH_TOKEN_EXPIRATION_TIME}
