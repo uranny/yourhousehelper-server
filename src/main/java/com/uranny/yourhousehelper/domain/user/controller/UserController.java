@@ -1,5 +1,6 @@
 package com.uranny.yourhousehelper.domain.user.controller;
 
+import com.uranny.yourhousehelper.domain.user.dto.request.UserReissueRequestDto;
 import com.uranny.yourhousehelper.domain.user.dto.request.UserSignInRequestDto;
 import com.uranny.yourhousehelper.domain.user.dto.request.UserSignUpRequestDto;
 import com.uranny.yourhousehelper.domain.user.dto.response.UserSignInResponseDto;
@@ -30,6 +31,12 @@ public class UserController {
     public ResponseEntity<BaseResponse<UserSignInResponseDto>> signIn(@RequestBody UserSignInRequestDto signInDto) {
         UserSignInResponseDto responseDto = userService.signIn(signInDto);
         return BaseResponse.of(responseDto, HttpStatus.OK, "로그인에 성공했습니다.");
+    }
+
+    @PostMapping("/reissue")
+    public ResponseEntity<BaseResponse<UserSignInResponseDto>> reissue(@RequestBody UserReissueRequestDto reissueDto) {
+        UserSignInResponseDto responseDto = userService.reissue(reissueDto);
+        return BaseResponse.of(responseDto, HttpStatus.OK, "토큰 재발급에 성공했습니다.");
     }
 }
 

@@ -26,6 +26,9 @@ public class JwtProvider {
     @Value("${jwt.access-token-expiration-time}")
     private long accessTokenExpirationTime;
 
+    @Value("${jwt.refresh-token-expiration-time}")
+    private long refreshTokenExpirationTime;
+
     private Key key;
 
     private final UserDetailsService userDetailsService;
@@ -36,8 +39,16 @@ public class JwtProvider {
     }
 
     public String createToken(String username) {
+        return createToken(username, accessTokenExpirationTime);
+    }
+
+    public String createRefreshToken(String username) {
+        return createToken(username, refreshTokenExpirationTime);
+    }
+
+    private String createToken(String username, long expirationTime) {
         Date now = new Date();
-        Date expiryDate = new Date(now.getTime() + accessTokenExpirationTime);
+        Date expiryDate = new Date(now.getTime() + expirationTime);
 
         return Jwts.builder()
                 .setSubject(username)

@@ -1,5 +1,6 @@
 package com.uranny.yourhousehelper.domain.user.service;
 
+import com.uranny.yourhousehelper.domain.user.dto.request.UserReissueRequestDto;
 import com.uranny.yourhousehelper.domain.user.dto.request.UserSignInRequestDto;
 import com.uranny.yourhousehelper.domain.user.dto.request.UserSignUpRequestDto;
 import com.uranny.yourhousehelper.domain.user.dto.response.UserSignInResponseDto;
@@ -43,7 +44,29 @@ public class UserServiceImpl implements UserService {
             throw new IllegalArgumentException("비밀번호가 일치하지 않습니다.");
         }
 
-        String token = jwtProvider.createToken(user.getUsername());
-        return new UserSignInResponseDto(token);
+        String accessToken = jwtProvider.createToken(user.getUsername());
+        String refreshToken = jwtProvider.createRefreshToken(user.getUsername());
+
+        return new UserSignInResponseDto(accessToken, refreshToken);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public UserSignInResponseDto reissue(UserReissueRequestDto reissueDto) {
+        String refreshToken = reissueDto.getRefreshToken();
+
+        if(!jwtProvider.validateToken(refreshToken)) {
+            throw new IllegalArgumentException("유효하지 않은 토큰입니다");
+        }
+
+        String username = jwtProvider.getUsername(refreshToken);
+
+        userRepository.findByUsername(username)
+                .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다"));
+
+        String newAccessToken = jwtProvider.createToken(username);
+        String newRefreshToken = jwtProvider.createRefreshToken(username);
+
+        return new UserSignInResponseDto(newAccessToken, newRefreshToken);
     }
 }
