@@ -30,6 +30,8 @@ public class UserServiceImpl implements UserService {
         User user = User.builder()
                 .username(signUpDto.getUsername())
                 .password(passwordEncoder.encode(signUpDto.getPassword()))
+                .reason(signUpDto.getReason())
+                .finalMoney(signUpDto.getFinalMoney())
                 .build();
         userRepository.save(user);
     }

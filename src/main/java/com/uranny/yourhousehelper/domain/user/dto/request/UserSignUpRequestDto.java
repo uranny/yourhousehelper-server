@@ -11,4 +11,10 @@ public class UserSignUpRequestDto {
 
     @NotBlank(message = "비밀번호는 필수입니다")
     private String password;
+
+    @NotBlank(message = "저축의 이유는 필수입니다")
+    private String reason;
+
+    @NotBlank(message = "최종 목표 자산은 필수입니다")
+    private Long finalMoney;
 }
