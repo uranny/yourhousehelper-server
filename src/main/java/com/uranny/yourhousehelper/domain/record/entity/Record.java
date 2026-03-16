@@ -20,6 +20,7 @@ public class Record {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private RecordType recordType;
 
@@ -33,7 +34,7 @@ public class Record {
     private LocalDate date;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "\"user\"")
+    @JoinColumn(name = "user_id")
     private User owner;
 
     public void update(RecordUpdateRequestDto dto) {

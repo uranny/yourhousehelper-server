@@ -8,7 +8,7 @@ import java.time.LocalDate;
 import java.util.List;
 
 public interface RecordService {
-    RecordResponseDto createRecord(String username, RecordCreateRequestDto recordCreateRequestDto);
+    void createRecord(String username, RecordCreateRequestDto recordCreateRequestDto);
 
     List<RecordResponseDto> findRecordsByUserAndDateBetweenOrderByDateDesc(String username, LocalDate startDate, LocalDate endDate);
 
