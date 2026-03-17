@@ -17,9 +17,9 @@ public class ReportResponseDto {
 
     private String content;
 
-    private LocalDate fromDate;
+    private LocalDate startDate;
 
-    private LocalDate toDate;
+    private LocalDate endDate;
 
     public static ReportResponseDto toResponseDto(Report report) {
         return new ReportResponseDto(
