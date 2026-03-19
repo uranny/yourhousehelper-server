@@ -41,6 +41,16 @@ public class ReportServiceImpl implements ReportService {
     }
 
     @Override
+    public ReportResponseDto findReportById(String username, Long reportId) {
+        User user = getUserByUsername(username);
+
+        Report report = reportRepository.findByIdAndOwner(reportId, user)
+                .orElseThrow(() -> new CustomException(HttpStatus.NOT_FOUND, "보고서를 찾을 수 없습니다."));
+
+        return ReportResponseDto.toResponseDto(report);
+    }
+
+    @Override
     public ReportResponseDto createReport(String username, LocalDate startDate, LocalDate endDate) {
         User user = getUserByUsername(username);
 
@@ -66,6 +76,7 @@ public class ReportServiceImpl implements ReportService {
 
         return ReportResponseDto.toResponseDto(report);
     }
+
     private ReportAiRequestDto buildAiRequest(User user, LocalDate startDate, LocalDate endDate) {
 
         Long total = recordRepository.sumCostByUserAndDateBetween(user, startDate, endDate);

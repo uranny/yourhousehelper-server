@@ -30,6 +30,15 @@ public class ReportController {
         return BaseResponse.of(results, HttpStatus.OK, "분석 보고서 조회에 성공했습니다");
     }
 
+    @GetMapping("/{id}")
+    public ResponseEntity<BaseResponse<ReportResponseDto>> findReportById(
+            Principal principal,
+            @PathVariable Long id
+    ) {
+        ReportResponseDto result = reportService.findReportById(principal.getName(),id);
+        return BaseResponse.of(result, HttpStatus.OK, "분석 보고서 단건 조회에 성공했습니다");
+    }
+
     @PostMapping
     public ResponseEntity<BaseResponse<ReportResponseDto>> createReport(
             Principal principal,
