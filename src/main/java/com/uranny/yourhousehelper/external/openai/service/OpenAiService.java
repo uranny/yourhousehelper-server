@@ -2,6 +2,8 @@ package com.uranny.yourhousehelper.external.openai.service;
 
 import com.uranny.yourhousehelper.external.openai.dto.request.ReportAiRequestDto;
 import org.springframework.ai.chat.client.ChatClient;
+import org.springframework.ai.openai.OpenAiChatOptions;
+import org.springframework.ai.openai.api.OpenAiApi;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -72,6 +74,7 @@ public class OpenAiService {
 
         return chatClient.prompt()
                 .user(prompt)
+                .options(OpenAiChatOptions.builder().model(OpenAiApi.ChatModel.GPT_4_O_MINI).build())
                 .call()
                 .content();
     }

@@ -26,6 +26,6 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(Exception.class)
     protected ResponseEntity<BaseResponse<Void>> handleException(Exception e) {
         log.error("처리되지 않은 예외 발생", e);
-        return BaseResponse.of(HttpStatus.INTERNAL_SERVER_ERROR, "서버 내부 오류가 발생했습니다.");
+        return BaseResponse.of(HttpStatus.INTERNAL_SERVER_ERROR, e.getMessage());
     }
 }
