@@ -20,7 +20,7 @@ jobs:
 
     - name: Copy files to EC2
       run: |
-        scp -i ${{ secrets.DEPLOY_KEY }} -r ./build/libs/*.jar ./Dockerfile ubuntu@13.124.235.140:/home/ubuntu/app
+        scp -r ./build/libs/*.jar ./Dockerfile ubuntu@13.124.235.140:/home/ubuntu/app
 
     - name: SSH into EC2 and deploy
       run: |
