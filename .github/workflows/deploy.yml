@@ -18,13 +18,16 @@ jobs:
       with:
         ssh-private-key: ${{ secrets.DEPLOY_KEY }}
 
+    - name: Build Spring Boot JAR
+      run: ./gradlew clean build -x test
+
     - name: Copy files to EC2
       run: |
         scp -r ./build/libs/*.jar ./Dockerfile ubuntu@13.124.235.140:/home/ubuntu/app
 
     - name: SSH into EC2 and deploy
       run: |
-        ssh -i ${{ secrets.DEPLOY_KEY }} ubuntu@13.124.235.140 << 'EOF'
+        ssh ubuntu@13.124.235.140 << 'EOF'
           cd /home/ubuntu/app
           sudo docker build -t yourhousehelper-server .
           sudo docker stop yourhousehelper-server || true
