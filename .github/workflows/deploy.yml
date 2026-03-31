@@ -1,36 +1,58 @@
-name: Deploy to EC2
+name: Java CI with Gradle and Deploy
 
 on:
   push:
-    branches:
-      - main 
+    branches: [ "main" ]
+
+permissions:
+  contents: read
 
 jobs:
-  deploy:
+  build:
     runs-on: ubuntu-latest
 
     steps:
-    - name: Checkout repo
-      uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
-    - name: Set up SSH
-      uses: webfactory/ssh-agent@v0.9.1
-      with:
-        ssh-private-key: ${{ secrets.DEPLOY_KEY }}
+      - name: Set up JDK 212
+        uses: actions/setup-java@v4
+        with:
+          java-version: '22'
+          distribution: 'temurin'
+      
+      - name: Build with Gradle
+        run: ./gradlew build
 
-    - name: Build Spring Boot JAR
-      run: ./gradlew clean build -x test
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v4
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
 
-    - name: Copy files to EC2
-      run: |
-        scp -r ./build/libs/*.jar ./Dockerfile ubuntu@13.124.235.140:/home/ubuntu/app
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: true
+          platforms: linux/amd64
+          tags: ${{ secrets.DOCKER_USERNAME }}/yourhousehelper-server:latest
 
-    - name: SSH into EC2 and deploy
-      run: |
-        ssh ubuntu@13.124.235.140 << 'EOF'
-          cd /home/ubuntu/app
-          sudo docker build -t yourhousehelper-server .
-          sudo docker stop yourhousehelper-server || true
-          sudo docker rm yourhousehelper-server || true
-          sudo docker run -d -p 8080:8080 --env-file .env --name yourhousehelper-server yourhousehelper-server
-        EOF
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Set up SSH
+        uses: webfactory/ssh-agent@v0.9.1
+        with:
+          ssh-private-key: ${{ secrets.DEPLOY_KEY }}
+
+      - name: Deploy to EC2
+        run: |
+          ssh ubuntu@${{ secrets.EC2_HOST }} << 'EOF'
+            sudo docker pull ${{ secrets.DOCKER_USERNAME }}/yourhousehelper-server:latest
+            
+            sudo docker stop starthub-server || true
+            sudo docker rm starthub-server || true
+            
+            sudo docker run -d -p 8080:8080 --env-file .env --name starthub-server ${{ secrets.DOCKER_USERNAME }}/yourhousehelper-server:latest
+          EOF
