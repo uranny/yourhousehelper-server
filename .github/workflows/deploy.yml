@@ -32,8 +32,7 @@ jobs:
       - name: Build and push Docker image
         uses: docker/build-push-action@v6
         with:
-          context: ./yourhousehelper-server
-          file: ./yourhousehelper-server/Dockerfile
+          context: .
           push: true
           platforms: linux/amd64
           tags: ${{ secrets.DOCKER_USERNAME }}/yourhousehelper-server:latest
