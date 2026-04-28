@@ -1,12 +1,12 @@
-# 1. Java 22 기반 OpenJDK 이미지 사용
+# 1. Java 22 기반 이미지
 FROM eclipse-temurin:22-jdk-alpine
 
-# 2. Gradle 빌드 후 생성된 JAR 파일 복사
+# 2. JAR 파일 복사
 ARG JAR_FILE=build/libs/*.jar
 COPY ${JAR_FILE} app.jar
 
-# 3. 컨테이너 실행 시 Spring Boot 앱 실행
-ENTRYPOINT ["java","-jar","/app.jar"]
+# 3. JVM 옵션 적용해서 실행 (핵심)
+ENTRYPOINT ["sh", "-c", "java $JAVA_OPTS -jar /app.jar"]
 
-# 4. 기본 포트 지정 (Spring Boot 기본 8080)
+# 4. 포트
 EXPOSE 8080
