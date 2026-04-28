@@ -49,6 +49,15 @@ jobs:
           key: ${{ secrets.DEPLOY_KEY }}
           script: |
             sudo docker pull ${{ secrets.DOCKER_USERNAME }}/yourhousehelper-server:latest
-            sudo docker stop yourhousehelper-server || true
-            sudo docker rm yourhousehelper-server || true
-            sudo docker run -d -p 8080:8080 --env-file .env --name starthub-server ${{ secrets.DOCKER_USERNAME }}/yourhousehelper-server:latest
+  
+            sudo docker stop starthub-server || true
+            sudo docker rm starthub-server || true
+  
+            sudo docker run -d \
+              -p 8080:8080 \
+              --env-file .env \
+              --name starthub-server \
+              -m 700m \
+              --memory-swap=1g \
+              -e JAVA_OPTS="-Xms256m -Xmx512m -XX:+UseContainerSupport" \
+              ${{ secrets.DOCKER_USERNAME }}/yourhousehelper-server:latest
