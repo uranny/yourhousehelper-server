@@ -52,12 +52,10 @@ jobs:
   
             sudo docker stop starthub-server || true
             sudo docker rm starthub-server || true
-  
             sudo docker run -d \
               -p 8080:8080 \
               --env-file .env \
               --name starthub-server \
               -m 700m \
-              --memory-swap=1g \
-              -e JAVA_OPTS="-Xms256m -Xmx512m -XX:+UseContainerSupport" \
+              -e JAVA_OPTS="-Xms256m -Xmx512m" \
               ${{ secrets.DOCKER_USERNAME }}/yourhousehelper-server:latest
