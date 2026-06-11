@@ -10,16 +10,24 @@ import com.uranny.yourhousehelper.domain.user.repository.UserRepository;
 import com.uranny.yourhousehelper.external.openai.service.OpenAiService;
 import com.uranny.yourhousehelper.global.exception.CustomException;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
+import reactor.core.Disposable;
 
+import java.io.IOException;
 import java.time.LocalDate;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class ReportServiceImpl implements ReportService {
+    private static final long REPORT_STREAM_TIMEOUT = 180_000L;
+
     private final ReportRepository reportRepository;
     private final RecordRepository recordRepository;
     private final UserRepository userRepository;
@@ -51,7 +59,7 @@ public class ReportServiceImpl implements ReportService {
     }
 
     @Override
-    public ReportResponseDto createReport(String username, LocalDate startDate, LocalDate endDate) {
+    public SseEmitter createReport(String username, LocalDate startDate, LocalDate endDate) {
         User user = getUserByUsername(username);
 
         if (reportRepository.existsByOwnerAndStartDateAndEndDate(user, startDate, endDate)) {
@@ -60,21 +68,84 @@ public class ReportServiceImpl implements ReportService {
 
         ReportAiRequestDto aiRequest = buildAiRequest(user, startDate, endDate);
 
-        String content = openAiService.getReportResponse(aiRequest);
-
         String title = startDate.getYear() + "년 " + endDate.getMonthValue()+"월" + " 수입 · 지출 내역 분석 보고서";
 
-        Report report = Report.builder()
-                        .title(title)
-                        .content(content)
-                        .startDate(startDate)
-                        .endDate(endDate)
-                        .owner(user)
-                        .build();
+        Report report = reportRepository.save(Report.builder()
+                .title(title)
+                .content("")
+                .startDate(startDate)
+                .endDate(endDate)
+                .owner(user)
+                .build());
 
-        reportRepository.save(report);
+        SseEmitter emitter = new SseEmitter(REPORT_STREAM_TIMEOUT);
+        StringBuilder contentBuilder = new StringBuilder();
+        AtomicReference<Disposable> subscriptionRef = new AtomicReference<>();
+        Runnable disposeSubscription = () -> {
+            Disposable subscription = subscriptionRef.get();
+            if (subscription != null && !subscription.isDisposed()) {
+                subscription.dispose();
+            }
+        };
 
-        return ReportResponseDto.toResponseDto(report);
+        emitter.onCompletion(disposeSubscription);
+        emitter.onTimeout(() -> {
+            disposeSubscription.run();
+            emitter.complete();
+        });
+        emitter.onError((e) -> disposeSubscription.run());
+
+        sendEvent(emitter, "start", ReportResponseDto.toResponseDto(report));
+
+        Disposable subscription = openAiService.streamReportResponse(aiRequest)
+                .subscribe(
+                        content -> {
+                            contentBuilder.append(content);
+                            sendEvent(emitter, "content", content);
+                        },
+                        e -> {
+                            log.error("보고서 스트리밍 생성 중 오류가 발생했습니다.", e);
+                            sendErrorEvent(emitter, e);
+                        },
+                        () -> {
+                            try {
+                                report.updateContent(contentBuilder.toString());
+                                Report savedReport = reportRepository.save(report);
+                                sendEvent(emitter, "complete", ReportResponseDto.toResponseDto(savedReport));
+                                emitter.complete();
+                            } catch (Exception e) {
+                                log.error("보고서 저장 중 오류가 발생했습니다.", e);
+                                sendErrorEvent(emitter, e);
+                            }
+                        }
+                );
+        subscriptionRef.set(subscription);
+
+        return emitter;
+    }
+
+    private void sendEvent(SseEmitter emitter, String name, Object data) {
+        try {
+            emitter.send(SseEmitter.event()
+                    .name(name)
+                    .data(data));
+        } catch (IOException e) {
+            throw new IllegalStateException("SSE 이벤트 전송 중 오류가 발생했습니다.", e);
+        }
+    }
+
+    private void sendErrorEvent(SseEmitter emitter, Throwable e) {
+        String message = e.getMessage() != null ? e.getMessage() : "보고서 생성 중 오류가 발생했습니다.";
+
+        try {
+            emitter.send(SseEmitter.event()
+                    .name("error")
+                    .data(message));
+        } catch (IOException ignored) {
+            log.debug("SSE 오류 이벤트 전송에 실패했습니다.", ignored);
+        } finally {
+            emitter.complete();
+        }
     }
 
     private ReportAiRequestDto buildAiRequest(User user, LocalDate startDate, LocalDate endDate) {

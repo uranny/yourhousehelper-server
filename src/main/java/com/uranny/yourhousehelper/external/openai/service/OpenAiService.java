@@ -5,6 +5,7 @@ import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.openai.OpenAiChatOptions;
 import org.springframework.ai.openai.api.OpenAiApi;
 import org.springframework.stereotype.Service;
+import reactor.core.publisher.Flux;
 
 @Service
 public class OpenAiService {
@@ -16,8 +17,23 @@ public class OpenAiService {
     }
 
     public String getReportResponse(ReportAiRequestDto req) {
+        return chatClient.prompt()
+                .user(buildReportPrompt(req))
+                .options(OpenAiChatOptions.builder().model(OpenAiApi.ChatModel.GPT_4_O_MINI).build())
+                .call()
+                .content();
+    }
 
-        String prompt = """
+    public Flux<String> streamReportResponse(ReportAiRequestDto req) {
+        return chatClient.prompt()
+                .user(buildReportPrompt(req))
+                .options(OpenAiChatOptions.builder().model(OpenAiApi.ChatModel.GPT_4_O_MINI).build())
+                .stream()
+                .content();
+    }
+
+    private String buildReportPrompt(ReportAiRequestDto req) {
+        return """
                 당신은 전문 데이터 분석가이자 미래 컨설팅 전문가 AI입니다.
                 다음 사용자의 소비 데이터와 데이터 형식를 분석해 소비 데이터와 같은 형식으로 Markdown 보고서를 작성하세요.
                 
@@ -71,11 +87,5 @@ public class OpenAiService {
                 req.getPastTotalExpenseMoney(),
                 req.getPastTotalMoney()
         );
-
-        return chatClient.prompt()
-                .user(prompt)
-                .options(OpenAiChatOptions.builder().model(OpenAiApi.ChatModel.GPT_4_O_MINI).build())
-                .call()
-                .content();
     }
 }

@@ -39,4 +39,8 @@ public class Report {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id")
     private User owner;
+
+    public void updateContent(String content) {
+        this.content = content;
+    }
 }

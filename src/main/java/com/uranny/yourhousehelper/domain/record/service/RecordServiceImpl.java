@@ -31,12 +31,12 @@ public class RecordServiceImpl implements RecordService {
     }
 
     @Override
-    public void createRecord(String username, RecordCreateRequestDto recordDto) {
+    public RecordResponseDto createRecord(String username, RecordCreateRequestDto recordDto) {
         User user = getUserByUsername(username);
         Record record = recordDto.toEntity(user);
         Record savedRecord = recordRepository.save(record);
 
-        toResponseDto(savedRecord);
+        return toResponseDto(savedRecord);
     }
 
     @Override

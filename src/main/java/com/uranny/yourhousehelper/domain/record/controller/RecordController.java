@@ -30,8 +30,8 @@ public class RecordController {
             @RequestBody
             RecordCreateRequestDto recordCreateRequestDto
     ) {
-        recordService.createRecord(principal.getName(), recordCreateRequestDto);
-        return null;
+        RecordResponseDto result = recordService.createRecord(principal.getName(), recordCreateRequestDto);
+        return BaseResponse.of(result, HttpStatus.CREATED, "기록 생성에 성공했습니다");
     }
 
     @GetMapping
