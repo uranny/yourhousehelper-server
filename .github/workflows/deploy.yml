@@ -57,5 +57,5 @@ jobs:
               --env-file .env \
               --name starthub-server \
               -m 700m \
-              -e JAVA_OPTS="-Xms256m -Xmx512m" \
+              -e JAVA_OPTS="-Xms128m -Xmx384m" \
               ${{ secrets.DOCKER_USERNAME }}/yourhousehelper-server:latest
